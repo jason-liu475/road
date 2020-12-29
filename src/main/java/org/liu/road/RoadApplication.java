@@ -8,7 +8,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 @EnableScheduling
 @EnableTransactionManagement
-@MapperScan("org.liu.road.dao")
+@MapperScan(basePackages = "org.liu.road.dao")
 @SpringBootApplication
 public class RoadApplication {
 

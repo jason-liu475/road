@@ -55,4 +55,4 @@ system:
     map:
       #百度坐标转换
       host: http://api.map.baidu.com
-      path: /ag/coord/convert?from=0&to=4&x=longitude&y=latitude
+      path: /ag/coord/convert?from=0&to=4&x=%s&y=%s

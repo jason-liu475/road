@@ -102,7 +102,7 @@ public class MpGenerator {
 
 		// 包配置
 		PackageConfig pc = new PackageConfig();
-		pc.setParent("org.liu.road");
+		pc.setParent("org.liu.road.dao");
 		pc.setModuleName("");
 		pc.setController("controller");
 		pc.setEntity("entity");
