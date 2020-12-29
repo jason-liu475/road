@@ -52,3 +52,7 @@ system:
       roadrank1: /roadrank?cityCode=268&roadtype=1
       #郑州市区实时拥堵普通道路
       roadrank11: /roadrank?cityCode=268&roadtype=11
+    map:
+      #百度坐标转换
+      host: http://api.map.baidu.com
+      path: /ag/coord/convert?from=0&to=4&x=longitude&y=latitude
