@@ -13,6 +13,9 @@
     var host = window.location.host;
     function upload(){
         var files = document.getElementById("file").files;
+        if(files.length === 0){
+            return;
+        }
         var formdata = new FormData();
         for(var i = 0; i < files.length; ++i){
             formdata.append("file",files[i]);
