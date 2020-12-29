@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>上传excel</title>
+    <title>upload excel</title>
 </head>
 <body>
-<h3>文件上传</h3>
+<h3>upload excel</h3>
 <input type="file" id="file" multiple="multiple" />
-<input type="button" id="upload" onclick="upload()" value="上传" />
+<input type="button" id="upload" onclick="upload()" value="upload" />
 </body>
 <script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
 <script type="text/javascript">
@@ -17,6 +17,7 @@
         if(files.length === 0){
             return;
         }
+        document.getElementById("upload").value = "uploading";
         var formdata = new FormData();
         for(var i = 0; i < files.length; ++i){
             formdata.append("file",files[i]);
@@ -29,6 +30,7 @@
             processData : false,
             dataType: "json",
             success: function (data) {
+                document.getElementById("upload").value = "upload";
                 console.log(data);
                 if(data.length > 0){
                     for(var i = 0; i < data.length; ++i){
@@ -38,6 +40,7 @@
                 }
             },
             error : function(data) {
+                document.getElementById("upload").value = "upload";
                 console.log(data);
                 alert('上传失败！');
             }
