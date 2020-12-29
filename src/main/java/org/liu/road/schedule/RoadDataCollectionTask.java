@@ -24,7 +24,7 @@ public class RoadDataCollectionTask {
 	@Autowired
 	private RoadrankService roadrankService;
 
-	@Scheduled(fixedRate = 5 * 60 * 1000)
+//	@Scheduled(fixedRate = 5 * 60 * 1000)
 	public void collectionDistrictRankData(){
 		int retryCount = 0;
 		SysTaskModel sysTaskModel = null;
@@ -40,7 +40,7 @@ public class RoadDataCollectionTask {
 			sysTaskService.finishTask(sysTaskModel);
 		}
 	}
-	@Scheduled(fixedRate = 5 * 60 * 1000)
+//	@Scheduled(fixedRate = 5 * 60 * 1000)
 	public void collectionRoadRank1Data(){
 		int retryCount = 0;
 		SysTaskModel sysTaskModel = null;
@@ -56,7 +56,7 @@ public class RoadDataCollectionTask {
 			sysTaskService.finishTask(sysTaskModel);
 		}
 	}
-	@Scheduled(fixedRate = 5 * 60 * 1000)
+//	@Scheduled(fixedRate = 5 * 60 * 1000)
 	public void collectionRoadRank11Data(){
 		int retryCount = 0;
 		SysTaskModel sysTaskModel = null;
