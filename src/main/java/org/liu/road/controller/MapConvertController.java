@@ -149,9 +149,9 @@ public class MapConvertController {
 	public static String decode(String source) {
 //		String sourceX = "MTEzLjAxNjEwNjQyMDI2";
 //		String sourceY = "MTEzLjAxNjEwNjQyMDI2";
-		log.debug("before decode :{}",source);
+		log.info("before decode :{}",source);
 		String result = Base64.decodeStr(source);
-		log.debug("after decode :{}",result);
+		log.info("after decode :{}",result);
 		return result;
 	}
 	private void writeResponse(String filePath,HttpServletResponse response) throws Exception{
