@@ -20,12 +20,14 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class MapConvertTest {
 	static List<String> urls = new ArrayList<>();
-	static String host = "http://api.map.baidu.com";
-	static String path = "/ag/coord/convert?from=0&to=4&x=%s&y=%s";
+	static String baiduhost = "http://api.map.baidu.com";
+	static String baidupath = "/ag/coord/convert?from=0&to=4&x=%s&y=%s";
+	static String gaodehost = "https://restapi.amap.com";
+	static String gaodepath = "/v3/assistant/coordinate/convert?key=386275042b48db8cf3d2e7d705681480&locations=%s&coordsys=gps&output=JSON";
 	static String filePath = "C:\\Users\\liu\\Desktop\\【GPS】坐标927.xlsx";
 	static int maxCol = 0;
 	static List<Map<String,String>> writeData = new ArrayList<>();
-	public static void main(String[] args) {
+	public static void main2(String[] args) {
 		readExcel();
 		getMapData();
 		writeExcel();		
@@ -38,6 +40,24 @@ public class MapConvertTest {
 		String y = Base64.decodeStr(sourceY);
 		log.info("after decode x:{},y:{}",x,y);
 	}
+	public static void main0(String[] args) {
+		double lat = 23.08569889;
+		double lng = 113.0016419;
+		log.info("before gaode convert lat:{},lng:{}",lat,lng);
+		String url = gaodehost + String.format(gaodepath,lng + "," + lat);
+		String jsonStr = HttpUtil.get(url);
+		log.info("url:{}\r\nresult:{}",url,jsonStr);
+		JSONObject jsonObject = JSONUtil.parseObj(jsonStr);
+		log.info("after gaode convert locations:{}",jsonObject.get("locations"));
+	}
+
+	public static void main(String[] args) {
+		String s1 = "1.1234567";
+		if(s1.length() - s1.lastIndexOf(".") > 6){
+			s1 = s1.substring(0,s1.lastIndexOf(".") + 7);
+		}
+		System.out.println(s1);
+	}
 	private static void readExcel() {
 		ExcelReader reader = ExcelUtil.getReader(FileUtil.file(filePath), 0);
 		List<Map<String, Object>> data = reader.readAll();
@@ -46,7 +66,7 @@ public class MapConvertTest {
 		for(Map<String,Object> map : data){
 			String lat = String.valueOf(map.get("lat"));
 			String lng = String.valueOf(map.get("lng"));
-			urls.add(host + String.format(path,lng,lat));
+			urls.add(baiduhost + String.format(baidupath,lng,lat));
 		}
 		reader.close();
 	}

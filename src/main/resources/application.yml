@@ -53,6 +53,11 @@ system:
       #郑州市区实时拥堵普通道路
       roadrank11: /roadrank?cityCode=268&roadtype=11
     map:
-      #百度坐标转换
-      host: http://api.map.baidu.com
-      path: /ag/coord/convert?from=0&to=4&x=%s&y=%s
+      baidu:
+        #百度坐标转换
+        host: http://api.map.baidu.com
+        path: /ag/coord/convert?from=0&to=4&x=%s&y=%s
+      gaode:
+        #高德坐标转换
+        host: https://restapi.amap.com
+        path: /v3/assistant/coordinate/convert?key=386275042b48db8cf3d2e7d705681480&locations=%s&coordsys=gps&output=JSON

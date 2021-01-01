@@ -7,6 +7,10 @@
 <body>
 <h3>upload excel</h3>
 <input type="file" id="file" multiple="multiple" />
+<select id="mapType">
+    <option value ="1">百度</option>
+    <option value ="2">高德</option>
+</select>
 <input type="button" id="upload" onclick="upload()" value="upload" />
 </body>
 <script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
@@ -17,11 +21,16 @@
         if(files.length === 0){
             return;
         }
+        var mapType = document.getElementById("mapType").value;
+        if(mapType === undefined){
+            mapType=1;
+        }
         document.getElementById("upload").value = "uploading";
         var formdata = new FormData();
         for(var i = 0; i < files.length; ++i){
             formdata.append("file",files[i]);
         }
+        formdata.append("mapType",mapType);
         $.ajax({
             type: 'POST',
             url: '/upload',

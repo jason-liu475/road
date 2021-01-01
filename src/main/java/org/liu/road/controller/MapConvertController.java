@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,27 +30,27 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 @Slf4j
 @Controller
 public class MapConvertController {
-	@Value("${system.http.map.host}")
-	private String host;
-	@Value("${system.http.map.path}")
-	private String path;
-
+	@Value("${system.http.map.baidu.host}")
+	private String baiduHost;
+	@Value("${system.http.map.baidu.path}")
+	private String baiduPath;
+	@Value("${system.http.map.gaode.host}")
+	private String gaodeHost;
+	@Value("${system.http.map.gaode.path}")
+	private String gaodePath;
 	@ResponseBody
 	@PostMapping(value="/upload")
-	public List<String> upload(@RequestParam("file")MultipartFile[] files) throws Exception {
+	public List<String> upload(@RequestParam("file")MultipartFile[] files,@RequestParam("mapType")String mapType) throws Exception {
 		List<String> filePaths = new ArrayList<>();
 		if(ArrayUtil.isNotEmpty(files)){
 			String prefix = "/tmp/" + System.currentTimeMillis();
@@ -66,15 +67,77 @@ public class MapConvertController {
 				reader.close();
 				int maxCol = data.get(0).keySet().size();
 				log.info("maxCol:{}",maxCol);
-				List<String> urls = readExcel(data);
-				List<Map<String,String>> mapData = getMapData(urls);
-				writeExcel(filePath,mapData,maxCol);
+				if("2".equals(mapType)){
+					List<String> urls = getGaodeMapUrls(data);
+					List<Map<String,String>> mapData = getGaodeMapData(urls);
+					writeExcelByGaode(filePath,mapData,maxCol);
+				}else if("1".equals(mapType)){
+					List<String> urls = getBaiduMapUrls(data);
+					List<Map<String,String>> mapData = getBaiduMapData(urls);
+					writeExcelByBaidu(filePath,mapData,maxCol);
+				}
 				filePaths.add(filePath);
-				//writeResponse(filePath,out);
 			}
 		}
 		return filePaths;
 	}
+
+	private List<String> getGaodeMapUrls(List<Map<String, Object>> data) {
+		List<String> urls = new ArrayList<>();
+		StringBuffer stringBuffer = new StringBuffer();
+		int count = 0;
+		for(Map<String,Object> map : data){
+			String lat = String.valueOf(map.get("lat"));
+			String lng = String.valueOf(map.get("lng"));
+			stringBuffer.append(subPointBehindSix(lng)).append(",").append(subPointBehindSix(lat));
+			if(++count == 20){
+				urls.add(gaodeHost + String.format(gaodePath,stringBuffer.toString()));
+				stringBuffer = new StringBuffer();
+				count = 0;
+			}else{
+				stringBuffer.append("|");
+			}
+		}
+		if(count > 0){
+			stringBuffer.deleteCharAt(stringBuffer.length() - 1);
+			urls.add(gaodeHost + String.format(gaodePath,stringBuffer.toString()));
+		}
+		return urls;
+	}
+	public static String subPointBehindSix(String target){
+		if(target.length() - target.lastIndexOf(".") > 6){
+			target = target.substring(0,target.lastIndexOf(".") + 7);
+		}
+		return target;
+	}
+
+	private List<Map<String,String>> getGaodeMapData(List<String> urls){
+		List<Map<String,String>> gaodeData = new ArrayList<>();
+		if(CollectionUtil.isNotEmpty(urls)){
+			for(String url : urls){
+				String jsonStr = HttpUtil.get(url);
+				log.info("url:{}\r\nresult:{}",url,jsonStr);
+				JSONObject jsonObject = JSONUtil.parseObj(jsonStr);
+				if(Objects.equals(jsonObject.get("status",String.class),"1")){
+					String[] locations = jsonObject.get("locations", String.class).split(";");
+					for(String location : locations){
+						Map<String,String> map = new HashMap<>();
+						map.put("status","1");
+						String[] latLng = location.split(",");
+						map.put("gaode-lng",latLng[0]);
+						map.put("gaode-lat",latLng[1]);
+						gaodeData.add(map);
+					}
+				}else{
+					Map<String,String> map = new HashMap<>();
+					map.put("status",jsonObject.get("info",String.class));
+					gaodeData.add(map);
+				}
+			}
+		}
+		return gaodeData;
+	}
+
 	@RequestMapping(value="/download",method = RequestMethod.GET)
 	public void download(@RequestParam("filePath")String filePath,HttpServletResponse response) throws Exception {
 		String fileName = filePath.substring(filePath.lastIndexOf("/") + 1);
@@ -101,17 +164,17 @@ public class MapConvertController {
 		return filePath;
 	}
 
-	private List<String> readExcel(List<Map<String, Object>> data) throws IOException {
+	private List<String> getBaiduMapUrls(List<Map<String, Object>> data) {
 		List<String> urls = new ArrayList<>();
 		for(Map<String,Object> map : data){
 			String lat = String.valueOf(map.get("lat"));
 			String lng = String.valueOf(map.get("lng"));
-			urls.add(host + String.format(path,lng,lat));
+			urls.add(baiduHost + String.format(baiduPath,lng,lat));
 		}
 		return urls;
 	}
-	private List<Map<String,String>> getMapData(List<String> urls) {
-		List<Map<String,String>> writeData = new ArrayList<>();
+	private List<Map<String,String>> getBaiduMapData(List<String> urls) {
+		List<Map<String,String>> baiduData = new ArrayList<>();
 		if(CollectionUtil.isNotEmpty(urls)) {
 			for (String url : urls) {
 				Map<String,String> map = new HashMap<>();
@@ -120,27 +183,41 @@ public class MapConvertController {
 				JSONObject jsonObject = JSONUtil.parseObj(jsonStr);
 				if(Objects.equals(jsonObject.get("error",String.class),"0")){
 					map.put("e","0");
-					map.put("x",jsonObject.get("x",String.class));
-					map.put("y",jsonObject.get("y",String.class));
+					map.put("baidu-lng",jsonObject.get("x",String.class));
+					map.put("baidu-lat",jsonObject.get("y",String.class));
 				}else{
 					map.put("e",jsonObject.get("error",String.class));
 				}
-
-				writeData.add(map);
+				baiduData.add(map);
 			}
 		}
-		return writeData;
+		return baiduData;
 	}
-	private void writeExcel(String filePath,List<Map<String,String>> writeData,int maxCol) throws IOException {
+	private void writeExcelByBaidu(String filePath,List<Map<String,String>> writeData,int maxCol) {
 		ExcelWriter writer = ExcelUtil.getWriter(filePath);
 		int col2 = maxCol + 1,y = 0;
-		writer.writeCellValue(maxCol,y,"x");
-		writer.writeCellValue(col2,y,"y");
+		writer.writeCellValue(maxCol,y,"baidu-lng");
+		writer.writeCellValue(col2,y,"baidu-lat");
 		for(Map<String,String> map : writeData){
 			y++;
 			if(Objects.equals(map.get("e"),"0")){
-				writer.writeCellValue(maxCol,y,decode(map.get("x")));
-				writer.writeCellValue(col2,y,decode(map.get("y")));
+				writer.writeCellValue(maxCol,y,decode(map.get("baidu-lng")));
+				writer.writeCellValue(col2,y,decode(map.get("baidu-lat")));
+			}
+		}
+		writer.flush();
+		writer.close();
+	}
+	private void writeExcelByGaode(String filePath,List<Map<String,String>> writeData,int maxCol) {
+		ExcelWriter writer = ExcelUtil.getWriter(filePath);
+		int col2 = maxCol + 1,y = 0;
+		writer.writeCellValue(maxCol,y,"gaode-lng");
+		writer.writeCellValue(col2,y,"gaode-lat");
+		for(Map<String,String> map : writeData){
+			y++;
+			if(Objects.equals(map.get("status"),"1")){
+				writer.writeCellValue(maxCol,y,map.get("gaode-lng"));
+				writer.writeCellValue(col2,y,map.get("gaode-lat"));
 			}
 		}
 		writer.flush();
